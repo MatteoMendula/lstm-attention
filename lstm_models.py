@@ -1,8 +1,5 @@
-import keras
-import keras.backend as K
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Reshape, Flatten, LSTM, Dense, Dropout, Embedding, Bidirectional, GRU
-from keras.optimizers import Adam
 from keras import initializers, regularizers, optimizers
 
 from layers import AttentionWithContext, Addition

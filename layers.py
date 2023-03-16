@@ -1,12 +1,6 @@
-import keras
 import keras.backend as K
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Reshape, Flatten, LSTM, Dense, Dropout, Embedding, Bidirectional, GRU
-from keras.optimizers import Adam
-from keras import initializers, regularizers
-from keras import optimizers
-from keras.engine.topology import Layer
-from keras import constraints
+from keras import initializers, regularizers, constraints
+from keras.layers import Layer
 
 ############################################## 
 """
@@ -69,6 +63,9 @@ class AttentionWithContext(Layer):
 				 W_regularizer=None, u_regularizer=None, b_regularizer=None,
 				 W_constraint=None, u_constraint=None, b_constraint=None,
 				 bias=True, **kwargs):
+		
+		# super(AttentionWithContext, self).__init__(**kwargs)
+		super(AttentionWithContext, self).__init__()
 
 		self.supports_masking = True
 		self.init = initializers.get('glorot_uniform')
@@ -82,24 +79,49 @@ class AttentionWithContext(Layer):
 		self.b_constraint = constraints.get(b_constraint)
 
 		self.bias = bias
-		super(AttentionWithContext, self).__init__(**kwargs)
+		# super(AttentionWithContext, self).__init__(**kwargs)
+
+	def get_config(self):
+		config = super().get_config()
+		config["supports_masking"] = self.supports_masking
+		config["init"] = self.init
+		config["W_regularizer"] = self.W_regularizer
+		config["u_regularizer"] = self.u_regularizer
+		config["b_regularizer"] = self.b_regularizer
+		config["W_constraint"] = self.W_constraint
+		config["u_constraint"] = self.u_constraint
+		config["b_constraint"] = self.b_constraint
+		config["bias"] = self.bias
+
+		# config.update({
+        #     "supports_masking": self.supports_masking,
+        #     "init": self.init,
+        #     "W_regularizer": self.W_regularizer,
+        #     "W_regularizer": self.W_regularizer,
+        #     "b_regularizer": self.b_regularizer,
+        #     "W_constraint": self.W_constraint,
+        #     "u_constraint": self.u_constraint,
+        #     "b_constraint": self.b_constraint,
+        #     "bias": self.bias,
+        # })
+		return config
 
 	def build(self, input_shape):
 		assert len(input_shape) == 3
 
-		self.W = self.add_weight((input_shape[-1], input_shape[-1],),
+		self.W = self.add_weight(shape=(input_shape[-1], input_shape[-1],),
 								 initializer=self.init,
 								 name='{}_W'.format(self.name),
 								 regularizer=self.W_regularizer,
 								 constraint=self.W_constraint)
 		if self.bias:
-			self.b = self.add_weight((input_shape[-1],),
+			self.b = self.add_weight(shape=(input_shape[-1],),
 									 initializer='zero',
 									 name='{}_b'.format(self.name),
 									 regularizer=self.b_regularizer,
 									 constraint=self.b_constraint)
 
-		self.u = self.add_weight((input_shape[-1],),
+		self.u = self.add_weight(shape=(input_shape[-1],),
 								 initializer=self.init,
 								 name='{}_u'.format(self.name),
 								 regularizer=self.u_regularizer,
@@ -156,7 +178,16 @@ class Addition(Layer):
 	"""
 
 	def __init__(self, **kwargs):
-		super(Addition, self).__init__(**kwargs)
+		super(Addition, self).__init__()
+		self.output_dim = None
+
+	def get_config(self):
+		config = super().get_config()
+		config["output_dim"] = self.output_dim
+		# config.update({
+        #     "output_dim": self.output_dim,
+        # })
+		return config
 
 	def build(self, input_shape):
 		self.output_dim = input_shape[-1]

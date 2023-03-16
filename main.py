@@ -11,6 +11,10 @@ with custom embedding
 Tips:
 1. Skip the preprocess, if you are using the same embedding vectors
 --skip-preprocess=True
+
+Matte debuggin:
+1. Run with
+CUDA_VISIBLE_DEVICES=0 python main.py --input_data_path="." --model_type=LSTM --is_attention=True --is_finetune=True --hidden_units=64 --num_layers=1 --is_bidirectional=True --max_sequence_length=35 --validation_split=0.2 
 """
 
 ############################################## 
@@ -35,7 +39,7 @@ from keras.layers import Dense, Dropout, Activation, Reshape, Flatten, LSTM, Den
 from keras.optimizers import Adam
 from keras.models import load_model
 from keras.utils import plot_model
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from IPython.display import SVG
 import numpy
 import warnings
@@ -43,13 +47,14 @@ from sklearn import metrics
 from copy import deepcopy
 import matplotlib.pyplot as plt
 
-from keras.backend.tensorflow_backend import set_session
+from tensorflow.compat.v1.keras.backend import set_session
 
 import lstm_models as lstm_models
 import svm_models as svm_models
 import util as util
 import evaluation as eval
 
+'''
 def train_svm():
 	model = svm_models.svm()
 
@@ -108,12 +113,13 @@ def train_svm():
 	print("test labels size:", len(test_arr_label))
 
 	svm_models.train(model, interview_train_data, interview_train_labels, interview_test_data, interview_test_labels)
+'''
 
 def train_lstm(word_to_idx, idx_to_word, vocab, interview_train_data, interview_train_labels, interview_test_data, interview_test_labels, twitter_stress_data, twitter_relax_data, model_type, hidden_units, num_layers, max_sequnce_length, is_attention, is_finetune, is_bidirectional, word_embedding, is_custom_embedding, validation_split):
 	batch_size = 128
 
 	num_initialization_epochs = 2
-	num_epochs = 10
+	num_epochs = 20
 
 	if not is_custom_embedding:
 		print("> Train LSTM with trainable word embedding matrix")
@@ -165,7 +171,7 @@ def train_lstm(word_to_idx, idx_to_word, vocab, interview_train_data, interview_
 		
 	# TESTING
 	print('\n>>> Testing...')
-	test(model, interview_test_data, interview_test_labels, False)
+	test(model, interview_test_data, interview_test_labels, True)
 
 	print('Training finished ', str(datetime.datetime.now()))
 	return model
@@ -173,6 +179,12 @@ def train_lstm(word_to_idx, idx_to_word, vocab, interview_train_data, interview_
 
 def test(test_model, test_data, test_labels, show_mistake=False):
 	test_predictions = test_model.predict(test_data, verbose=0)
+
+	print(" ----------------- ---- test_data --- -----------------")
+	print(test_data)
+	print(" ----------------- ----- test_predictions -- -----------------")
+	print(test_predictions)
+	print(" ----------------- ------- -----------------")
 	
 	# PRINT WRONG PREDICTIONS
 	if show_mistake:
@@ -236,7 +248,7 @@ if __name__ == '__main__':
 	input_data_path = options.input_data_path
 	max_sequence_length = int(options.max_sequence_length)
 	skip_preprocess = options.skip_preprocess == "True"
-	validation_split = int(options.validation_split)
+	validation_split = float(options.validation_split)
 
 	word_embedding = None
 	word_embedding_path = None
@@ -343,6 +355,8 @@ if __name__ == '__main__':
 
 			word_to_idx, idx_to_word, vocab = util.generate_vocab(all_data)
 
+		print("word_to_idx", word_to_idx["faved"])
+
 		# generate word idx from vocabulary
 		print(">>> generate word idx")
 		interview_train_data, interview_train_labels = util.generate_word_index(interview_train_data, interview_train_labels, word_to_idx, idx_to_word, vocab, max_sequence_length)
@@ -419,10 +433,16 @@ if __name__ == '__main__':
 		np.save(input_data_path + "/preprocessed/idx_to_word", idx_to_word)
 		np.save(input_data_path + "/preprocessed/vocab", vocab)
 
+		# save dictionary to word_to_idx.pkl file
+		with open(input_data_path + '/preprocessed/word_to_idx.pkl', 'wb') as fp:
+			pickle.dump(word_to_idx, fp)
+
 		if is_custom_embedding:
 			np.save(input_data_path + "/preprocessed/word_embedding", word_embedding)
 
 	############################################## 
 	# TRAIN AND TEST MODEL
 	##############################################
-	train_lstm(word_to_idx, idx_to_word, vocab, interview_train_data, interview_train_labels, interview_test_data, interview_test_labels, twitter_stress_data, twitter_relax_data, model_type, hidden_units, num_layers, max_sequence_length, is_attention, is_finetune, is_bidirectional, word_embedding, is_custom_embedding, validation_split)
+	model = train_lstm(word_to_idx, idx_to_word, vocab, interview_train_data, interview_train_labels, interview_test_data, interview_test_labels, twitter_stress_data, twitter_relax_data, model_type, hidden_units, num_layers, max_sequence_length, is_attention, is_finetune, is_bidirectional, word_embedding, is_custom_embedding, validation_split)
+	model.save("./final_model/stress_lstm_plain.h5")
+

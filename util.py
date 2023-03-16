@@ -20,8 +20,8 @@ def load_twitter_data(inputdatapath):
 	return twitter_stress_text, twitter_relax_text
 
 def load_preprocessed_twitter_data(inputdatapath):
-	twitter_stress_data_all = np.load(inputdatapath + "/twitter/twitter_stress_text_random.npy")
-	twitter_relax_data_all = np.load(inputdatapath + "/twitter/twitter_relax_text_random.npy")
+	twitter_stress_data_all = np.load(inputdatapath + "/data/twitter_stress_text.npy")
+	twitter_relax_data_all = np.load(inputdatapath + "/data/twitter_relax_text.npy")
 	twitter_stress_label_all = []
 	twitter_relax_label_all = []
 
@@ -41,8 +41,8 @@ def load_interview_data_with_valid(inputdatapath):
 	return interview_train_data, interview_train_labels, interview_valid_data, interview_valid_labels, interview_test_data, interview_test_labels
 
 def load_interview_data(inputdatapath):
-	interview_train_data, interview_train_labels = read_data(inputdatapath + "/interview/phase_all_transcript_label_per_sentence/train_text_genta.csv")
-	interview_test_data, interview_test_labels = read_data(inputdatapath + "/interview/phase_all_transcript_label_per_sentence/test_text_genta.csv")
+	interview_train_data, interview_train_labels = read_data(inputdatapath + "/data/train_interview.csv")
+	interview_test_data, interview_test_labels = read_data(inputdatapath + "/data/test_interview.csv")
 	
 	return interview_train_data, interview_train_labels, interview_test_data, interview_test_labels
 
@@ -101,7 +101,7 @@ def generate_word_index(data, labels, word_to_idx, idx_to_word, vocab, max_seque
 	# input = data: matrix of words, labels: array of words, word_to_idx: dict, idx_to_word: dict, vocab: array of words
 	# output = train_data: np array, train_labels: np array
 
-	train_data = np.zeros((len(data), max_sequence_length), dtype=np.int)
+	train_data = np.zeros((len(data), max_sequence_length), dtype=np.int64)
 	train_labels = np.zeros((len(labels)))
 	num_classes = 2
 	
